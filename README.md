@@ -1,5 +1,10 @@
 # CatFetch
 
+[![Go Version](https://img.shields.io/badge/Go-1.25-00ADD8?style=flat&logo=go)](https://go.dev/)
+[![Tests](https://github.com/bmj2728/catfetch/actions/workflows/test.yml/badge.svg)](https://github.com/bmj2728/catfetch/actions/workflows/test.yml)
+[![Release](https://github.com/bmj2728/catfetch/actions/workflows/release.yml/badge.svg)](https://github.com/bmj2728/catfetch/actions/workflows/release.yml)
+[![codecov](https://codecov.io/gh/bmj2728/catfetch/branch/main/graph/badge.svg)](https://codecov.io/gh/bmj2728/catfetch)
+
 A desktop GUI application built with Go and Gio UI that fetches and displays random cat images from [cataas.com](https://cataas.com/).
 
 ## Prerequisites
@@ -65,6 +70,52 @@ Launch the application and click the "Fetch Image" button to load a random cat p
 - **Text Overlays**: Add custom text overlays to cat images
 - **Tag Search**: Search for cats by specific tags
 - **Image Filters**: Add sliders and options to apply filters (sepia, blur, brightness, etc.) using cataas API parameters
+
+## Development
+
+### Pre-commit Hooks
+
+This project uses pre-commit hooks for automated code quality checks. To set up:
+
+1. **Install pre-commit:**
+   ```bash
+   # macOS
+   brew install pre-commit
+
+   # Linux
+   pip install pre-commit
+   # or
+   pipx install pre-commit
+   ```
+
+2. **Install the git hooks:**
+   ```bash
+   pre-commit install
+   ```
+
+3. **Run hooks manually (optional):**
+   ```bash
+   pre-commit run --all-files
+   ```
+
+The hooks will automatically run on every commit and check for:
+- Go code formatting
+- Linting with golangci-lint
+- Secret detection with gitleaks
+- Common issues (trailing whitespace, merge conflicts, etc.)
+
+### Running Tests
+
+```bash
+# Run all tests
+go test ./...
+
+# Run with coverage
+go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+
+# View coverage report
+go tool cover -html=coverage.out
+```
 
 ## License
 
