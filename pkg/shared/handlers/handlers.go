@@ -1,24 +1,22 @@
 package handlers
 
 import (
-	"bytes"
 	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"log"
 	"time"
 
 	"go-gui/pkg/shared/api"
 )
 
-func HandleButtonClick() (image.Image, error) {
-	data, err := api.RequestCat(30 * time.Second)
+func HandleButtonClick() (image.Image, *api.CatMetadata, error) {
+	img, metadata, err := api.RequestRandomCat(30 * time.Second)
 	if err != nil {
 		log.Printf("Error fetching image: %v", err)
-		return nil, err
+		return nil, nil, err
 	}
-	img, _, err := image.Decode(bytes.NewReader(data))
-	if err != nil {
-		log.Printf("Error decoding image: %v", err)
-		return nil, err
-	}
-	return img, nil
+
+	return img, metadata, nil
 }
