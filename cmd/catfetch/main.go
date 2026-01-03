@@ -15,7 +15,7 @@ func main() {
 	go func() {
 		// Create window
 		w := new(app.Window)
-		w.Option(app.Title("Cat Image Viewer"), app.Size(unit.Dp(400), unit.Dp(500)))
+		w.Option(app.Title("CatFetch"), app.Size(unit.Dp(400), unit.Dp(500)))
 
 		if err := ui.Run(w); err != nil {
 			log.Fatal(err)

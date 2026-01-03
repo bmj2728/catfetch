@@ -1,4 +1,4 @@
-# Cat Image Viewer
+# CatFetch
 
 A desktop GUI application built with Go and Gio UI that fetches and displays random cat images from [cataas.com](https://cataas.com/).
 
@@ -12,7 +12,7 @@ A desktop GUI application built with Go and Gio UI that fetches and displays ran
 
 ```bash
 git clone <repository-url>
-cd go-gui
+cd catfetch
 ```
 
 ### Build the Application
