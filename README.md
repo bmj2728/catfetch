@@ -7,6 +7,13 @@
 
 A desktop GUI application built with Go and Gio UI that fetches and displays random cat images from [cataas.com](https://cataas.com/).
 
+## Gallery
+
+<p align="center">
+  <img src="screenshots/cat_fetch_prefetch.png" alt="CatFetch startup screen" width="45%">
+  <img src="screenshots/cat_fetch_with_catpic.png" alt="CatFetch with cat image" width="45%">
+</p>
+
 ## Prerequisites
 
 - Go 1.25 or higher
