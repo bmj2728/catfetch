@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -24,6 +25,7 @@ func RequestRandomCat(timeout time.Duration) (image.Image, *CatMetadata, error) 
 	if err != nil {
 		return nil, nil, err
 	}
+	fmt.Println(reqURL)
 	client := &http.Client{Timeout: timeout}
 	var meta CatMetadata
 

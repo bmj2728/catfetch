@@ -869,11 +869,16 @@ func (c *CatURL) Generate() (string, error) {
 		b.WriteRune(caasPathSeparator)
 		b.WriteString(c.saysText)
 	}
+
+	hasParams := len(c.params) > 0
+
 	// if there are query params, process them
-	if len(c.params) > 0 {
+	if hasParams {
 		b.WriteString(caasQueryStart)
 		query := strings.Join(c.params, caasQueryAnd)
 		b.WriteString(query)
+	} else if c.asJSON || c.asHTML {
+		b.WriteString(caasQueryStart)
 	}
 	// add output param if present
 	if c.asJSON {
