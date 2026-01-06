@@ -11,12 +11,13 @@ import (
 )
 
 const (
-	caasBaseURL      = "https://cataas.com/cat"
-	caasSaysEndpoint = "says"
-	caasQueryStart   = "?"
-	caasQueryAnd     = "&"
-	caasReturnJSON   = "json=true"
-	caasReturnHTML   = "html=true"
+	caasBaseURL       = "https://cataas.com/cat"
+	caasSaysEndpoint  = "says"
+	caasQueryStart    = "?"
+	caasQueryAnd      = "&"
+	caasReturnJSON    = "json=true"
+	caasReturnHTML    = "html=true"
+	caasPathSeparator = '/'
 )
 
 const (
@@ -29,6 +30,9 @@ const (
 	caasKeyWidth    = "width"
 	caasKeyHeight   = "height"
 	caasKeyBlur     = "blur"
+
+	//caasKeyJSON = "json"
+	//caasKeyHTML = "html"
 
 	// Custom Filter Params
 
@@ -49,7 +53,10 @@ const (
 )
 
 var (
-	ErrIDAndTag = fmt.Errorf("cannot generate url with id and tag")
+	ErrIDAndTag    = fmt.Errorf("cannot generate url with id and tag")
+	ErrSaysNoText  = fmt.Errorf("cannot generate a Says URL with no text")
+	ErrInvalidTag  = fmt.Errorf("invalid tag")
+	ErrHTMLAndJSON = fmt.Errorf("cannot generate as both HTML and JSON")
 )
 
 func validRGBValue(val int) bool {
@@ -65,10 +72,12 @@ type CatURL struct {
 	hasID        bool
 	tag          string
 	hasTag       bool
-	isSays       bool // used to determine if using text overlay
+	hasSays      bool // used to determine if using text overlay
 	saysText     string
 	customFilter bool
 	params       []string // store params
+	asJSON       bool
+	asHTML       bool
 }
 
 /*
@@ -90,9 +99,9 @@ type CatURL struct {
 		- caasBaseURL/TAG/caasSaysEndpoint/escaped%20text%21 + caasQueryStart + params
 */
 
-func NewCatURL(baseURL string) *CatURL {
+func NewCatURL() *CatURL {
 	return &CatURL{
-		baseURL: baseURL,
+		baseURL: caasBaseURL,
 		params:  make([]string, 0),
 	}
 }
@@ -110,10 +119,12 @@ func (c *CatURL) WithID(id string) *CatURL {
 		hasID:        true,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       c.params,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -126,10 +137,12 @@ func (c *CatURL) WithTag(tag string) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 
@@ -139,10 +152,12 @@ func (c *CatURL) WithTag(tag string) *CatURL {
 		hasID:        c.hasID,
 		tag:          tag,
 		hasTag:       true,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       c.params,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -154,10 +169,12 @@ func (c *CatURL) WithSays(txt string) *CatURL {
 		catID:        c.catID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       true,
+		hasSays:      true,
 		saysText:     cleaned,
 		customFilter: c.customFilter,
 		params:       c.params,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -172,10 +189,12 @@ func (c *CatURL) WithCAASImageType(imgType CAASImageType) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 
@@ -188,10 +207,12 @@ func (c *CatURL) WithCAASImageType(imgType CAASImageType) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -204,10 +225,12 @@ func (c *CatURL) WithCAASImageFilter(filter CAASImageFilter) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 	isCustom := false
@@ -221,10 +244,12 @@ func (c *CatURL) WithCAASImageFilter(filter CAASImageFilter) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: isCustom,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -237,10 +262,12 @@ func (c *CatURL) WithCAASImageFit(fit CAASImageFit) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 	updatedParams := c.updateParams(caasKeyFit, str)
@@ -250,10 +277,12 @@ func (c *CatURL) WithCAASImageFit(fit CAASImageFit) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -266,10 +295,12 @@ func (c *CatURL) WithCAASImagePosition(position CAASImagePosition) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 	updatedParams := c.updateParams(caasKeyPosition, str)
@@ -279,10 +310,12 @@ func (c *CatURL) WithCAASImagePosition(position CAASImagePosition) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -294,10 +327,12 @@ func (c *CatURL) WithWidth(width int) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -309,10 +344,12 @@ func (c *CatURL) WithHeight(height int) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -324,10 +361,12 @@ func (c *CatURL) WithBlur(blur int) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -339,10 +378,12 @@ func (c *CatURL) WithFilterR(r int) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 	updatedParams := c.updateParams(caasKeyRed, strconv.Itoa(r))
@@ -352,10 +393,12 @@ func (c *CatURL) WithFilterR(r int) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -367,10 +410,12 @@ func (c *CatURL) WithFilterG(g int) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 	updatedParams := c.updateParams(caasKeyGreen, strconv.Itoa(g))
@@ -380,10 +425,12 @@ func (c *CatURL) WithFilterG(g int) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -395,10 +442,12 @@ func (c *CatURL) WithFilterB(b int) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 	updatedParams := c.updateParams(caasKeyBlue, strconv.Itoa(b))
@@ -408,10 +457,12 @@ func (c *CatURL) WithFilterB(b int) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -424,10 +475,12 @@ func (c *CatURL) WithFilterRGB(r, g, b int) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 
@@ -438,10 +491,12 @@ func (c *CatURL) WithFilterRGB(r, g, b int) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 
@@ -457,10 +512,12 @@ func (c *CatURL) WithFilterRGB(r, g, b int) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -472,10 +529,12 @@ func (c *CatURL) WithBrightness(brightness int) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 	updatedParams := c.updateParams(caasKeyBrightness, strconv.Itoa(brightness))
@@ -485,10 +544,12 @@ func (c *CatURL) WithBrightness(brightness int) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -500,10 +561,12 @@ func (c *CatURL) WithSaturation(saturation int) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 	updatedParams := c.updateParams(caasKeySaturation, strconv.Itoa(saturation))
@@ -513,10 +576,12 @@ func (c *CatURL) WithSaturation(saturation int) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -528,10 +593,12 @@ func (c *CatURL) WithHue(hue int) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 	updatedParams := c.updateParams(caasKeyHue, strconv.Itoa(hue))
@@ -541,10 +608,12 @@ func (c *CatURL) WithHue(hue int) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
@@ -556,10 +625,12 @@ func (c *CatURL) WithLightness(lightness int) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 	updatedParams := c.updateParams(caasKeyLightness, strconv.Itoa(lightness))
@@ -569,25 +640,29 @@ func (c *CatURL) WithLightness(lightness int) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
 func (c *CatURL) WithFont(font CAASFont) *CatURL {
-	if !c.isSays {
+	if !c.hasSays {
 		return &CatURL{
 			baseURL:      c.baseURL,
 			catID:        c.catID,
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 	str, exists := CAASFonts[font]
@@ -598,10 +673,12 @@ func (c *CatURL) WithFont(font CAASFont) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 	updatedParams := c.updateParams(caasKeyFont, str)
@@ -611,53 +688,61 @@ func (c *CatURL) WithFont(font CAASFont) *CatURL {
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
 func (c *CatURL) WithFontSize(size int) *CatURL {
-	if !c.isSays {
+	if !c.hasSays {
 		return &CatURL{
 			baseURL:      c.baseURL,
 			catID:        c.catID,
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
-	c.updateParams(caasKeyFontSize, strconv.Itoa(size))
+	updatedParams := c.updateParams(caasKeyFontSize, strconv.Itoa(size))
 	return &CatURL{
 		baseURL:      c.baseURL,
 		catID:        c.catID,
 		hasID:        c.hasID,
 		tag:          c.tag,
 		hasTag:       c.hasTag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
-		params:       c.params,
+		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
 func (c *CatURL) WithFontColor(hexColor string) *CatURL {
-	if !c.isSays {
+	if !c.hasSays {
 		return &CatURL{
 			baseURL:      c.baseURL,
 			catID:        c.catID,
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 
@@ -669,54 +754,99 @@ func (c *CatURL) WithFontColor(hexColor string) *CatURL {
 			hasID:        c.hasID,
 			tag:          c.tag,
 			hasTag:       c.hasTag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
 
-	c.updateParams(caasKeyFontColor, hexColor)
+	updatedParams := c.updateParams(caasKeyFontColor, hexColor)
 	return &CatURL{
 		baseURL:      c.baseURL,
 		catID:        c.catID,
 		tag:          c.tag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
-		params:       c.params,
+		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
 	}
 }
 
 func (c *CatURL) WithFontBackground(hexColor string) *CatURL {
-	if !c.isSays {
+	if !c.hasSays {
 		return &CatURL{
 			baseURL:      c.baseURL,
 			catID:        c.catID,
 			tag:          c.tag,
-			isSays:       c.isSays,
+			hasSays:      c.hasSays,
 			saysText:     c.saysText,
 			customFilter: c.customFilter,
 			params:       c.params,
+			asJSON:       c.asJSON,
+			asHTML:       c.asHTML,
 		}
 	}
-	c.updateParams(caasKeyFontBackground, hexColor)
+	updatedParams := c.updateParams(caasKeyFontBackground, hexColor)
 	return &CatURL{
 		baseURL:      c.baseURL,
 		catID:        c.catID,
 		tag:          c.tag,
-		isSays:       c.isSays,
+		hasSays:      c.hasSays,
+		saysText:     c.saysText,
+		customFilter: c.customFilter,
+		params:       updatedParams,
+		asJSON:       c.asJSON,
+		asHTML:       c.asHTML,
+	}
+}
+
+func (c *CatURL) AsJSON() *CatURL {
+	return &CatURL{
+		baseURL:      c.baseURL,
+		catID:        c.catID,
+		tag:          c.tag,
+		hasSays:      c.hasSays,
 		saysText:     c.saysText,
 		customFilter: c.customFilter,
 		params:       c.params,
+		asJSON:       true,
+		asHTML:       c.asHTML,
+	}
+}
+
+func (c *CatURL) AsHTML() *CatURL {
+	return &CatURL{
+		baseURL:      c.baseURL,
+		catID:        c.catID,
+		tag:          c.tag,
+		hasSays:      c.hasSays,
+		saysText:     c.saysText,
+		customFilter: c.customFilter,
+		params:       c.params,
+		asJSON:       c.asJSON,
+		asHTML:       true,
 	}
 }
 
 func (c *CatURL) Generate() (string, error) {
 
-	// Bad Combo fail fast
+	// Bad Combos fail fast
 	if c.hasID && c.hasTag {
 		return "", ErrIDAndTag
+	}
+	if c.hasSays && c.saysText == "" {
+		return "", ErrSaysNoText
+	}
+	if c.hasTag && slices.Contains(AvailableTags, c.tag) {
+		return "", ErrInvalidTag
+	}
+	if c.asHTML && c.asJSON {
+		return "", ErrHTMLAndJSON
 	}
 
 	// write the base
@@ -725,25 +855,34 @@ func (c *CatURL) Generate() (string, error) {
 
 	// add the ID/Tag if present
 	if c.hasID {
-		b.WriteRune('/')
+		b.WriteRune(caasPathSeparator)
 		b.WriteString(c.catID)
 	}
 	if c.hasTag {
-		b.WriteRune('/')
+		b.WriteRune(caasPathSeparator)
 		b.WriteString(c.tag)
 	}
-
-	if c.isSays {
-		b.WriteRune('/')
+	// add text overlay if present
+	if c.hasSays {
+		b.WriteRune(caasPathSeparator)
 		b.WriteString(caasSaysEndpoint)
-		b.WriteRune('/')
+		b.WriteRune(caasPathSeparator)
 		b.WriteString(c.saysText)
 	}
-
+	// if there are query params, process them
 	if len(c.params) > 0 {
 		b.WriteString(caasQueryStart)
 		query := strings.Join(c.params, caasQueryAnd)
 		b.WriteString(query)
+	}
+	// add output param if present
+	if c.asJSON {
+		b.WriteString(caasQueryAnd)
+		b.WriteString(caasReturnJSON)
+	}
+	if c.asHTML {
+		b.WriteString(caasQueryAnd)
+		b.WriteString(caasReturnHTML)
 	}
 
 	return b.String(), nil

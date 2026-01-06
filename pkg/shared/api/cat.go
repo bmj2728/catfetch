@@ -16,7 +16,14 @@ import (
 func RequestRandomCat(timeout time.Duration) (image.Image, *CatMetadata, error) {
 	// make some stuff
 	bodyReader := bytes.NewReader(make([]byte, 0))
-	reqURL := caasBaseURL + caasQueryStart + caasReturnJSON //first get the metadata in json format
+	// first get the metadata in JSON format
+	// the NewCatURL provides a CatURL struct using the caas base - https://cataas.com/cat
+	// AsJSON adds the json=true param to the CatURL's param slice
+	// Generate validates and constructs the URL, returning an error if not valid
+	reqURL, err := NewCatURL().AsJSON().Generate()
+	if err != nil {
+		return nil, nil, err
+	}
 	client := &http.Client{Timeout: timeout}
 	var meta CatMetadata
 
