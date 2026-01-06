@@ -14,55 +14,62 @@ A desktop GUI application built with Go and Gio UI that fetches and displays ran
   <img src="screenshots/cat_fetch_with_catpic.png" alt="CatFetch with cat image" width="45%">
 </p>
 
-## Prerequisites
+## Installation
 
-- Go 1.25 or higher
+### Windows
 
-## Getting Started
+1. Download the latest release for Windows:
+   - Go to [Releases](https://github.com/bmj2728/catfetch/releases/latest)
+   - Download `catfetch_vX.X.X_windows_amd64.zip`
 
-### Clone the Repository
+2. Extract the ZIP file to a location of your choice
 
+3. Run `catfetch-windows-amd64.exe`
+
+**Optional:** Add the extracted folder to your PATH to run from anywhere.
+
+### macOS
+
+1. Download the latest release for macOS:
+   - Go to [Releases](https://github.com/bmj2728/catfetch/releases/latest)
+   - Download `catfetch_vX.X.X_macos_universal.zip` (supports both Intel and Apple Silicon)
+
+2. Extract the ZIP file
+
+3. Double-click `catfetch.app` to launch
+
+**Note:** On first launch, macOS may warn that the app is from an unidentified developer. Right-click the app and select "Open" to bypass this warning.
+
+### Linux
+
+#### Download Pre-built Binary
+
+1. Download the latest release for Linux:
+   - Go to [Releases](https://github.com/bmj2728/catfetch/releases/latest)
+   - Download `catfetch_vX.X.X_linux_amd64.tar.gz`
+
+2. Extract and run:
+   ```bash
+   tar -xzf catfetch_vX.X.X_linux_amd64.tar.gz
+   ./catfetch-linux-amd64
+   ```
+
+#### Install System-wide (Linux)
+
+**User-local install:**
 ```bash
-git clone <repository-url>
-cd catfetch
-```
-
-### Build the Application
-
-```bash
-go build -o build/catfetch ./cmd/catfetch
-```
-
-### Run the Application
-
-From the project directory:
-
-```bash
-./build/catfetch
-```
-
-Or run directly without building:
-
-```bash
-go run ./cmd/catfetch/main.go
-```
-
-### Optional: Install System-wide
-
-To run the application from anywhere without `./`:
-
-**Linux/macOS (user-local install):**
-```bash
-cp build/catfetch ~/bin/catfetch
+cp catfetch-linux-amd64 ~/bin/catfetch
+chmod +x ~/bin/catfetch
 # Ensure ~/bin is in your PATH
 ```
 
-**Linux (system-wide install):**
+**System-wide install:**
 ```bash
-sudo cp build/catfetch /usr/local/bin/catfetch
+sudo cp catfetch-linux-amd64 /usr/local/bin/catfetch
+sudo chmod +x /usr/local/bin/catfetch
 ```
 
-Then you can run it from anywhere:
+Then run from anywhere:
 ```bash
 catfetch
 ```
@@ -71,45 +78,34 @@ catfetch
 
 Launch the application and click the "Fetch Image" button to load a random cat picture. The image will automatically scale to fit the window while maintaining its aspect ratio.
 
-## Roadmap
+## Building from Source
 
-- **Cat History**: Browse previously fetched cat images
-- **Text Overlays**: Add custom text overlays to cat images
-- **Tag Search**: Search for cats by specific tags
-- **Image Filters**: Add sliders and options to apply filters (sepia, blur, brightness, etc.) using cataas API parameters
+### Prerequisites
 
-## Development
+- Go 1.25 or higher
+- Platform-specific dependencies:
+  - **Linux:** `libwayland-dev`, `libx11-dev`, `libxkbcommon-x11-dev`, `libgles2-mesa-dev`, `libegl1-mesa-dev`, `libffi-dev`, `libxcursor-dev`, `libvulkan-dev`
+  - **macOS:** Xcode command line tools
+  - **Windows:** MinGW-w64 or similar CGO-compatible compiler
 
-### Pre-commit Hooks
+### Build Instructions
 
-This project uses pre-commit hooks for automated code quality checks. To set up:
+```bash
+# Clone the repository
+git clone https://github.com/bmj2728/catfetch.git
+cd catfetch
 
-1. **Install pre-commit:**
-   ```bash
-   # macOS
-   brew install pre-commit
+# Build the application
+go build -o build/catfetch ./cmd/catfetch
 
-   # Linux
-   pip install pre-commit
-   # or
-   pipx install pre-commit
-   ```
+# Run it
+./build/catfetch
+```
 
-2. **Install the git hooks:**
-   ```bash
-   pre-commit install
-   ```
-
-3. **Run hooks manually (optional):**
-   ```bash
-   pre-commit run --all-files
-   ```
-
-The hooks will automatically run on every commit and check for:
-- Go code formatting
-- Linting with golangci-lint
-- Secret detection with gitleaks
-- Common issues (trailing whitespace, merge conflicts, etc.)
+Or run directly without building:
+```bash
+go run ./cmd/catfetch/main.go
+```
 
 ### Running Tests
 
@@ -123,6 +119,13 @@ go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 # View coverage report
 go tool cover -html=coverage.out
 ```
+
+## Roadmap
+
+- **Cat History**: Browse previously fetched cat images
+- **Text Overlays**: Add custom text overlays to cat images
+- **Tag Search**: Search for cats by specific tags
+- **Image Filters**: Add sliders and options to apply filters (sepia, blur, brightness, etc.) using cataas API parameters
 
 ## License
 
