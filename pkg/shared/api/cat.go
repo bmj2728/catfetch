@@ -12,9 +12,12 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/bmj2728/catfetch/pkg/shared/catdb"
+	"github.com/bmj2728/catfetch/pkg/shared/metadata"
 )
 
-func RequestRandomCat(timeout time.Duration) (image.Image, *CatMetadata, error) {
+func RequestRandomCat(timeout time.Duration, db *catdb.CatDB) (image.Image, *metadata.CatMetadata, error) {
 	// make some stuff
 	bodyReader := bytes.NewReader(make([]byte, 0))
 	// first get the metadata in JSON format
@@ -27,7 +30,7 @@ func RequestRandomCat(timeout time.Duration) (image.Image, *CatMetadata, error) 
 	}
 	fmt.Println(reqURL)
 	client := &http.Client{Timeout: timeout}
-	var meta CatMetadata
+	var meta metadata.CatMetadata
 
 	req, err := http.NewRequest(http.MethodGet, reqURL, bodyReader)
 	if err != nil {
@@ -79,6 +82,12 @@ func RequestRandomCat(timeout time.Duration) (image.Image, *CatMetadata, error) 
 		log.Printf("Error decoding image: %v", err)
 		return nil, nil, err
 	}
+
+	cid, vid, err := db.AddCatVersion(&meta, respBody)
+	if err != nil {
+		log.Printf("Error adding cat version: %v", err)
+	}
+	log.Printf("Cat version: %s - %s", cid, vid)
 
 	mFormat := "image/" + format
 

@@ -1,4 +1,4 @@
-package api
+package metadata
 
 import "time"
 

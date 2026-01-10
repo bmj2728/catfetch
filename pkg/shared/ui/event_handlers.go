@@ -9,14 +9,16 @@ import (
 	"time"
 
 	"github.com/bmj2728/catfetch/pkg/shared/api"
+	"github.com/bmj2728/catfetch/pkg/shared/catdb"
+	"github.com/bmj2728/catfetch/pkg/shared/metadata"
 )
 
-func HandleButtonClick() (image.Image, *api.CatMetadata, error) {
-	img, metadata, err := api.RequestRandomCat(30 * time.Second)
+func HandleButtonClick(db *catdb.CatDB) (image.Image, *metadata.CatMetadata, error) {
+	img, md, err := api.RequestRandomCat(30*time.Second, db)
 	if err != nil {
 		log.Printf("Error fetching image: %v", err)
 		return nil, nil, err
 	}
 
-	return img, metadata, nil
+	return img, md, nil
 }

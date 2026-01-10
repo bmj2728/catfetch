@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/bmj2728/catfetch/internal/testutil"
+	"github.com/bmj2728/catfetch/pkg/shared/metadata"
 )
 
 // FuzzMetadataJSON fuzzes JSON unmarshaling for CatMetadata
@@ -30,7 +31,7 @@ func FuzzMetadataJSON(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, jsonData string) {
 		// Fuzzing should never panic
-		var meta CatMetadata
+		var meta metadata.CatMetadata
 
 		// Try to unmarshal - this should handle all malformed input gracefully
 		err := json.Unmarshal([]byte(jsonData), &meta)
@@ -140,7 +141,7 @@ func FuzzCatMetadataRoundTrip(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, id, tagsJSON, createdAt, url, mimetype string) {
 		// Create metadata struct
-		meta := CatMetadata{
+		meta := metadata.CatMetadata{
 			ID:       id,
 			URL:      url,
 			MIMEType: mimetype,
@@ -164,7 +165,7 @@ func FuzzCatMetadataRoundTrip(f *testing.F) {
 		}
 
 		// Unmarshal it back
-		var meta2 CatMetadata
+		var meta2 metadata.CatMetadata
 		err = json.Unmarshal(data, &meta2)
 		if err != nil {
 			t.Errorf("Failed to unmarshal after marshal: %v", err)

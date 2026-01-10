@@ -6,19 +6,19 @@ import (
 	//"image"
 	"log"
 
-	"gioui.org/op/clip"
-	"gioui.org/op/paint"
-	"github.com/bmj2728/catfetch/pkg/shared/catpic"
-
 	"gioui.org/app"
 	"gioui.org/layout"
 	"gioui.org/op"
+	"gioui.org/op/clip"
+	"gioui.org/op/paint"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/bmj2728/catfetch/pkg/shared/catdb"
+	"github.com/bmj2728/catfetch/pkg/shared/catpic"
 )
 
-func Run(w *app.Window) error {
+func Run(w *app.Window, db *catdb.CatDB) error {
 	// button
 	var fetchButton widget.Clickable
 	// thread-safe image wrapper
@@ -50,7 +50,7 @@ func Run(w *app.Window) error {
 			if fetchButton.Clicked(gtx) && !currentImage.IsLoading() {
 				currentImage.SetLoading()
 				go func(wind *app.Window) {
-					img, _, err := HandleButtonClick()
+					img, _, err := HandleButtonClick(db)
 					if err != nil {
 						log.Printf("Error handling button click: %v", err)
 					} else {

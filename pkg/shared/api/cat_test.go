@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bmj2728/catfetch/internal/testutil"
+	"github.com/bmj2728/catfetch/pkg/shared/metadata"
 )
 
 // TestRequestRandomCat_Success tests successful cat image fetching with valid metadata and images
@@ -271,7 +272,7 @@ func TestRequestRandomCat_ImageDecodeError(t *testing.T) {
 func TestCatMetadata_Getters(t *testing.T) {
 	createdAt, _ := time.Parse(time.RFC3339, "2025-01-01T12:00:00Z")
 
-	meta := CatMetadata{
+	meta := metadata.CatMetadata{
 		ID:        "test_id_123",
 		Tags:      []string{"cute", "fluffy", "orange"},
 		CreatedAt: createdAt,
@@ -306,7 +307,7 @@ func TestCatMetadata_Getters(t *testing.T) {
 
 // TestCatMetadata_EmptyValues tests getters with zero values
 func TestCatMetadata_EmptyValues(t *testing.T) {
-	var meta CatMetadata
+	var meta metadata.CatMetadata
 
 	t.Run("empty_id", func(t *testing.T) {
 		testutil.AssertEqual(t, "", meta.GetID(), "empty ID")
@@ -338,7 +339,7 @@ func TestCatMetadata_EmptyValues(t *testing.T) {
 // TestCatMetadata_EdgeCases tests edge cases for metadata
 func TestCatMetadata_EdgeCases(t *testing.T) {
 	t.Run("empty_tags_array", func(t *testing.T) {
-		meta := CatMetadata{
+		meta := metadata.CatMetadata{
 			ID:   "test",
 			Tags: []string{},
 		}
@@ -348,14 +349,14 @@ func TestCatMetadata_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("special_characters_in_id", func(t *testing.T) {
-		meta := CatMetadata{
+		meta := metadata.CatMetadata{
 			ID: "test-cat_123!@#$%",
 		}
 		testutil.AssertEqual(t, "test-cat_123!@#$%", meta.GetID(), "special chars in ID")
 	})
 
 	t.Run("url_with_query_params", func(t *testing.T) {
-		meta := CatMetadata{
+		meta := metadata.CatMetadata{
 			URL: "https://example.com/cat.jpg?width=100&height=100",
 		}
 		testutil.AssertEqual(t, "https://example.com/cat.jpg?width=100&height=100", meta.GetURL(), "URL with params")
